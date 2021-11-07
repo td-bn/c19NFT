@@ -7,8 +7,7 @@ import { ethers } from "hardhat";
 
 const RINKEBY_VRF_COORDINATOR = "0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B";
 const RINKEBY_LINKTOKEN = "0x01be23585060835e02b77ef475b0cc51aa1e0709";
-const RINKEBY_KEYHASH =
-  "0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311";
+const RINKEBY_KEYHASH = "0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311";
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -19,16 +18,16 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const COVIDNFT = await ethers.getContractFactory("COVID");
-  const nft = await COVIDNFT.deploy(
+  const CovidCats = await ethers.getContractFactory("CovidCats");
+  
+  const covidCats = await CovidCats.deploy(
     RINKEBY_VRF_COORDINATOR,
     RINKEBY_LINKTOKEN,
     RINKEBY_KEYHASH
   );
 
-  await nft.deployed();
-
-  console.log("COVIDNFT contract deployed to:", nft.address);
+  await covidCats.deployed();
+  console.log("COVIDNFT contract deployed to:", covidCats.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -9,11 +9,12 @@
  * 
  * Disable use of claim() function before the VRF function is fulfilled
  * Determine how to store metadata in a format that OpenSea will accept
+ * Configure smart contract and personal .env file to deploy on Rinkeby on Hardhat
  */
 
 
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
@@ -118,27 +119,15 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
         50
     ];
 
-    /**
-     * Constructor inherits VRFConsumerBase
-     * 
-     * Network: Kovan
-     * Chainlink VRF Coordinator address: 0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9
-     * LINK token address:                0xa36085F69e2889c224210F603D836748e7dC0088
-     * Key Hash: 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4
-     */
-    constructor() 
-        VRFConsumerBase(
-            0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9, // VRF Coordinator
-            0xa36085F69e2889c224210F603D836748e7dC0088  // LINK Token
-        )
-        ERC721("COVID", "C19")
-        Ownable()
-    {
-        LINK_token = IERC20(0xa36085F69e2889c224210F603D836748e7dC0088);
-        keyHash = 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4;
-        fee = 0.1 * 10 ** 18; // 0.1 LINK (Varies by network)
+    constructor( address _VRFCoordinator, address _linkToken, bytes32 _keyHash)
+        VRFConsumerBase(_VRFCoordinator, _linkToken)
+        ERC721("CovidCats", "CovidCat")
+        Ownable() {
+            LINK_token = IERC20(_linkToken);
+            keyHash = _keyHash;
+            fee = 0.1 * 10 ** 18;
     }
-    
+
     /** 
      * Requests random number from Chainlink VRF function
      */
