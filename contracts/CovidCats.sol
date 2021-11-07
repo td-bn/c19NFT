@@ -1,15 +1,7 @@
-/**
- * THIS IS A PROTOTYPE CONTRACT WITH VALUES HARDCODED FOR KOVAN NETWORK
- * PLEASE DO NOT USE THIS CODE IN PRODUCTION.
- *
- * You need to send this contract LINK tokens for the claim() function to work 
- */
-
 /** TO-DO
  * 
  * Disable use of claim() function before the VRF function is fulfilled
  * Determine how to store metadata in a format that OpenSea will accept
- * Configure smart contract and personal .env file to deploy on Rinkeby on Hardhat
  */
 
 
