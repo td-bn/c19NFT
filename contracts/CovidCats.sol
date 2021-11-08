@@ -1,6 +1,5 @@
 /** TO-DO
  * 
- * Disable use of claim() function before the VRF function is fulfilled
  * Determine how to store metadata in a format that OpenSea will accept
  */
 
@@ -34,6 +33,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
     bytes32 internal keyHash; //Public key against which randomness is generated
     uint256 internal fee; //Fee required to fulfil a VRF request
     mapping(bytes32 => address) requestToSender;
+    mapping(address => bool) isClaiming;
     IERC20 public LINK_token;
     
     // TRAITS
@@ -125,13 +125,17 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
      */
     function claim() public returns (bytes32 requestId) {
         require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
+        require(isClaiming[msg.sender] == false, "YOU CANNOT CLAIM ANOTHER NFT YET");
         requestId = requestRandomness(keyHash, fee);
         requestToSender[requestId] = msg.sender;
+        isClaiming[msg.sender] = true;
     }
 
     /**
      * Callback function used by VRF Coordinator
      * Using "Having multiple VRF requests in flight" pattern as per https://docs.chain.link/docs/chainlink-vrf-best-practices/
+     * Also using "Getting multiple random numbers" pattern
+     * Also using "Getting a random number within a range" pattern
      * NOTE that this function has a gas limit of 200,000 or it will as per Chainlink docs
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
@@ -140,12 +144,17 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
         // Get tokenId for this NFT mint
         uint256 id = covidNFT.length;
 
-        // Get a random number in a range from 1 to 100
-        uint256 random_index = (randomness % 100) + 1;
+        // Get 6 random numbers in the range from 1 to 100
+        uint256[6] memory randomValues;
+        
+        for (uint256 i = 0; i < 6; i++) {
+            randomValues[i] = uint256(keccak256(abi.encode(randomness, i)));
+            randomValues[i] = (randomValues[i] % 100) + 1;
+        }
 
-        // Use above random number and trait weights to generate traits
+        // Use above 6 random numbers and trait weights to randomly generate traits
         uint256 sum;
-
+        
         string memory _variant;
         string memory _background;
         string memory _mask;
@@ -155,7 +164,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < variant_weights.length; i++) {
             sum += variant_weights[i];
-            if (sum >= random_index) {
+            if (sum >= randomValues[0]) {
                 _variant = variant[i];
                 sum = 0;
                 break;
@@ -164,7 +173,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < background_weights.length; i++) {
             sum += background_weights[i];
-            if (sum >= random_index) {
+            if (sum >= randomValues[1]) {
                 _background = background[i];
                 sum = 0;
                 break;
@@ -173,7 +182,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < mask_weights.length; i++) {
             sum += mask_weights[i];
-            if (sum >= random_index) {
+            if (sum >= randomValues[2]) {
                 _mask = mask[i];
                 sum = 0;
                 break;
@@ -182,7 +191,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < glasses_weights.length; i++) {
             sum += glasses_weights[i];
-            if (sum >= random_index) {
+            if (sum >= randomValues[3]) {
                 _glasses = glasses[i];
                 sum = 0;
                 break;
@@ -191,7 +200,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < hat_weights.length; i++) {
             sum += hat_weights[i];
-            if (sum >= random_index) {
+            if (sum >= randomValues[4]) {
                 _hat = hat[i];
                 sum = 0;
                 break;
@@ -200,7 +209,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < vaccine_weights.length; i++) {
             sum += vaccine_weights[i];
-            if (sum >= random_index) {
+            if (sum >= randomValues[5]) {
                 _vaccine = vaccine[i];
                 sum = 0;
                 break;
@@ -220,6 +229,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         // Mint NFT
         _safeMint(initiator, id);
+        isClaiming[msg.sender] = false;
     }
 
     // Withdraw function to avoid locking your LINK in the contract
