@@ -229,7 +229,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         // Mint NFT
         _safeMint(initiator, id);
-        isClaiming[msg.sender] = false;
+        isClaiming[initiator] = false;
     }
 
     // Withdraw function to avoid locking your LINK in the contract
