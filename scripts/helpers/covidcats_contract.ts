@@ -1,4 +1,3 @@
-import { any } from "hardhat/internal/core/params/argumentTypes";
 import { provider, wallet } from "./wallet"
 const ethers = require("ethers");
 
@@ -34,7 +33,19 @@ export async function withdrawLink(_address: string) {
   console.log("LINK WITHDRAWED!")
 }
 
-export async function findMintEvent(_address: string, _tokenId: number) {
+export async function getEvent(_address: string) {
+  const covidcats_contract = new ethers.Contract(_address, abi, provider);
+  
+  console.log("LISTENING FOR MINT EVENT")
+  covidcats_contract.once("Mint", async (_minter: string, _tokenID: any) => {
+    const id = _tokenID.toNumber();
+    const traits = await findMintEvent(_address, id)
+    console.log(traits)
+  })
+}
+
+// For any tokenID, find the corresponding Mint event and get trait data from event log data
+async function findMintEvent(_address: string, _tokenId: number) {
   const covidcats_contract = new ethers.Contract(_address, abi, provider);
   
   // Get the Mint event by tokenId
