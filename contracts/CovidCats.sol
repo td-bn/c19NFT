@@ -29,6 +29,8 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
     NFT[] public covidNFT;
 
+    event Mint(address indexed _minter, uint256 indexed _tokenID, string[6] traits);
+
     // DECLARING CHAINLINK VRF FUNCTION CONSTANTS
     bytes32 internal keyHash; //Public key against which randomness is generated
     uint256 internal fee; //Fee required to fulfil a VRF request
@@ -229,6 +231,16 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         // Mint NFT
         _safeMint(initiator, id);
+        
+        emit Mint(initiator, id, 
+            [_variant,
+            _background,
+            _mask,
+            _glasses,
+            _hat,
+            _vaccine]
+            );
+
         isClaiming[initiator] = false;
     }
 
