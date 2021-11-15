@@ -3,7 +3,10 @@ import * as dotenv from "dotenv";
 import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-ethers";
 import "@typechain/hardhat";
+import "hardhat-deploy";
+import "hardhat-deploy-ethers";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 
@@ -24,6 +27,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 const config: HardhatUserConfig = {
   solidity: "0.8.4",
+  namedAccounts: {
+    deployer: 0,
+    user: 1,
+  },
   networks: {
     rinkeby: {
       url: process.env.RINKEBY_URL || "",
