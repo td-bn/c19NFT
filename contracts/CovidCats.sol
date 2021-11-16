@@ -8,15 +8,17 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
+contract CovidCats is ERC721, ERC721Enumerable, VRFConsumerBase, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     
+    uint256 public constant MAX_SUPPLY = 10000;
     event Mint(address indexed _minter, uint256 indexed _tokenID, string[6] traits);
 
     // DECLARING CHAINLINK VRF FUNCTION CONSTANTS
@@ -43,7 +45,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
         20
     ];
 
-    string[] private ears = [
+    string[] private ear = [
         "ear1",
         "ear2",
         "ear3",
@@ -128,7 +130,7 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
         "mask5"
     ];
 
-    uint256[] private vaccine_weights = [
+    uint256[] private mask_weights = [
         20,
         20,
         20,
@@ -144,6 +146,18 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
             keyHash = _keyHash;
             fee = 0.1 * 10 ** 18;
     }
+
+    function supportsInterface(bytes4 interfaceId)
+        public view override(ERC721, ERC721Enumerable)
+        returns (bool) {
+            return super.supportsInterface(interfaceId);
+        }
+
+    // Function to remove ERC721, ERC721Enumerable function clash error
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) 
+        internal override(ERC721, ERC721Enumerable) {
+            super._beforeTokenTransfer(from, to, tokenId);
+        }
 
     /** 
      * Requests random number from Chainlink VRF function
@@ -164,11 +178,13 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
      * NOTE that this function has a gas limit of 200,000 or it will as per Chainlink docs
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
-        address initiator = requestToSender[requestId];
+        require(totalSupply() <= 10000, "TOTAL SUPPLY HAS BEEN MINTED");
         
         // Get tokenId for this NFT mint
-        uint256 id = covidNFT.length;
+        uint256 id = totalSupply() + 1;
 
+        address initiator = requestToSender[requestId];
+        
         // Get 6 random numbers in the range from 1 to 100
         uint256[6] memory randomValues;
         
@@ -180,26 +196,53 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
         // Use above 6 random numbers and trait weights to randomly generate traits
         uint256 sum;
         
-        string memory _variant;
-        string memory _background;
+        string memory _face;
+        string memory _ear;
+        string memory _mouth;
+        string memory _eye;
+        string memory _whisker;
         string memory _mask;
-        string memory _glasses;
-        string memory _hat;
-        string memory _vaccine;
 
-        for (uint i = 0; i < variant_weights.length; i++) {
-            sum += variant_weights[i];
+        for (uint i = 0; i < face_weights.length; i++) {
+            sum += face_weights[i];
             if (sum >= randomValues[0]) {
-                _variant = variant[i];
+                _face = face[i];
                 sum = 0;
                 break;
             }
         }
 
-        for (uint i = 0; i < background_weights.length; i++) {
-            sum += background_weights[i];
+        for (uint i = 0; i < ear_weights.length; i++) {
+            sum += ear_weights[i];
             if (sum >= randomValues[1]) {
-                _background = background[i];
+                _ear = ear[i];
+                sum = 0;
+                break;
+            }
+        }
+
+        for (uint i = 0; i < mouth_weights.length; i++) {
+            sum += mouth_weights[i];
+            if (sum >= randomValues[2]) {
+                _mouth = mouth[i];
+                sum = 0;
+                break;
+            }
+        }
+
+        for (uint i = 0; i < eye_weights.length; i++) {
+            sum += eye_weights[i];
+            if (sum >= randomValues[3]) {
+                _eye = eye[i];
+                sum = 0;
+                break;
+            }
+        }
+
+        for (uint i = 0; i < whisker_weights.length; i++) {
+            sum += whisker_weights[i];
+            if (sum >= randomValues[4]) {
+                _whisker = whisker[i];
                 sum = 0;
                 break;
             }
@@ -207,61 +250,23 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < mask_weights.length; i++) {
             sum += mask_weights[i];
-            if (sum >= randomValues[2]) {
+            if (sum >= randomValues[5]) {
                 _mask = mask[i];
                 sum = 0;
                 break;
             }
         }
-
-        for (uint i = 0; i < glasses_weights.length; i++) {
-            sum += glasses_weights[i];
-            if (sum >= randomValues[3]) {
-                _glasses = glasses[i];
-                sum = 0;
-                break;
-            }
-        }
-
-        for (uint i = 0; i < hat_weights.length; i++) {
-            sum += hat_weights[i];
-            if (sum >= randomValues[4]) {
-                _hat = hat[i];
-                sum = 0;
-                break;
-            }
-        }
-
-        for (uint i = 0; i < vaccine_weights.length; i++) {
-            sum += vaccine_weights[i];
-            if (sum >= randomValues[5]) {
-                _vaccine = vaccine[i];
-                sum = 0;
-                break;
-            }
-        }
         
-        // Push traits to NFT struct
-        covidNFT.push(NFT(
-            _variant,
-            _background,
-            _mask,
-            _glasses,
-            _hat,
-            _vaccine
-            )
-        );
-
         // Mint NFT
         _safeMint(initiator, id);
         
         emit Mint(initiator, id, 
-            [_variant,
-            _background,
-            _mask,
-            _glasses,
-            _hat,
-            _vaccine]
+            [_face,
+            _ear,
+            _mouth,
+            _eye,
+            _whisker,
+            _mask]
             );
 
         isClaiming[initiator] = false;
