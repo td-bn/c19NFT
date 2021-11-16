@@ -3,7 +3,7 @@
 import { transferLink } from "./helpers/link_contract";
 import { claim, withdrawLink, getEvent } from "./helpers/covidcats_contract";
 
-const address = "0xaa00a05f3e8f113a41f54585ffe2bbdae8063e25" // CHANGE DEPLOYED COVID CATS CONTRACT ADDRESS HERE
+const address = "0x54C78044296829E50DeA5bb9bD840aBA028F9aA7" // CHANGE DEPLOYED COVID CATS CONTRACT ADDRESS HERE
 // Is there a way to programatically change the above address to link to the most recent deployment?
 
 async function test_mint(_address: string) {

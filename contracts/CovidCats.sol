@@ -81,12 +81,12 @@ contract CovidCats is ERC721, ERC721Enumerable, VRFConsumerBase, Ownable, Reentr
     ];
 
     string[] private eye = [
-        "ear1",
-        "ear2",
-        "ear3",
-        "ear4",
-        "ear5",
-        "ear6"
+        "eye1",
+        "eye2",
+        "eye3",
+        "eye4",
+        "eye5",
+        "eye6"
     ];
 
     uint256[] private eye_weights = [
@@ -163,6 +163,7 @@ contract CovidCats is ERC721, ERC721Enumerable, VRFConsumerBase, Ownable, Reentr
      * Requests random number from Chainlink VRF function
      */
     function claim() public returns (bytes32 requestId) {
+        require(totalSupply() <= 10000, "TOTAL SUPPLY HAS BEEN MINTED");
         require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
         require(isClaiming[msg.sender] == false, "YOU CANNOT CLAIM ANOTHER NFT YET");
         requestId = requestRandomness(keyHash, fee);
@@ -178,8 +179,6 @@ contract CovidCats is ERC721, ERC721Enumerable, VRFConsumerBase, Ownable, Reentr
      * NOTE that this function has a gas limit of 200,000 or it will as per Chainlink docs
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
-        require(totalSupply() <= 10000, "TOTAL SUPPLY HAS BEEN MINTED");
-        
         // Get tokenId for this NFT mint
         uint256 id = totalSupply() + 1;
 

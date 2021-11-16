@@ -30,7 +30,7 @@ export async function withdrawLink(_address: string) {
   const covidcats_contract = new ethers.Contract(_address, abi, provider);
   const covidcats_contract_connected = covidcats_contract.connect(wallet);
   await covidcats_contract_connected.withdrawLink();
-  console.log("LINK WITHDRAWED!")
+  console.log("LINK WITHDRAWN!")
 }
 
 export async function getEvent(_address: string) {
