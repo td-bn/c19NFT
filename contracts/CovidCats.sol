@@ -17,18 +17,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     
-    // DECLARING NFT VARIABLES
-    struct NFT {
-        string variant;
-        string background;
-        string mask;
-        string glasses;
-        string hat;
-        string vaccine;
-    }
-
-    NFT[] public covidNFT;
-
     event Mint(address indexed _minter, uint256 indexed _tokenID, string[6] traits);
 
     // DECLARING CHAINLINK VRF FUNCTION CONSTANTS
@@ -39,41 +27,15 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
     IERC20 public LINK_token;
     
     // TRAITS
-    string[] private variant = [
-        "Regular",
-        "Delta",
-        "Dead"
+    string[] private face = [
+        "face1",
+        "face2",
+        "face3",
+        "face4",
+        "face5"
     ];
 
-    uint256[] private variant_weights = [
-        81,
-        19,
-        1
-    ];
-
-    string[] private background = [
-        "White",
-        "Black",
-        "Red",
-        "Blue"
-    ];
-
-    uint256[] private background_weights = [
-        25,
-        25,
-        25,
-        25
-    ];
-
-    string[] private mask = [
-        "No Mask",
-        "Basic Surgical Mask",
-        "N95 Mask",
-        "Floral Print Surgical Mask",
-        "Floral N95 Mask"
-    ];
-
-    uint256[] private mask_weights = [
+    uint256[] private face_weights = [
         20,
         20,
         20,
@@ -81,36 +43,97 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
         20
     ];
 
-    string[] private glasses = [
-        "No Glasses",
-        "Basic Sunglasses",
-        "Basic Glasses"
+    string[] private ears = [
+        "ear1",
+        "ear2",
+        "ear3",
+        "ear4",
+        "ear5",
+        "ear6",
+        "ear7"
     ];
 
-    uint256[] private glasses_weights = [
-        33,
-        33,
-        34
+    uint256[] private ear_weights = [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        40
+    ];
+    string[] private mouth = [
+        "mouth1",
+        "mouth2",
+        "mouth3",
+        "mouth4",
+        "mouth5"
     ];
 
-    string[] private hat = [
-        "No Hat",
-        "Cap"
+    uint256[] private mouth_weights = [
+        20,
+        20,
+        20,
+        20,
+        20
     ];
 
-    uint256[] private hat_weights = [
-        50,
-        50
+    string[] private eye = [
+        "ear1",
+        "ear2",
+        "ear3",
+        "ear4",
+        "ear5",
+        "ear6"
     ];
 
-    string[] private vaccine = [
-        "Modern",
-        "Astro"
+    uint256[] private eye_weights = [
+        20,
+        20,
+        20,
+        20,
+        10,
+        10
+    ];
+
+    string[] private whisker = [
+        "whisker1",
+        "whisker2",
+        "whisker3",
+        "whisker4",
+        "whisker5",
+        "whisker6",
+        "whisker7",
+        "whisker8",
+        "whisker9"
+    ];
+
+    uint256[] private whisker_weights = [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        20
+    ];
+
+    string[] private mask = [
+        "mask1",
+        "mask2",
+        "mask3",
+        "mask4",
+        "mask5"
     ];
 
     uint256[] private vaccine_weights = [
-        50,
-        50
+        20,
+        20,
+        20,
+        20,
+        20
     ];
 
     constructor( address _VRFCoordinator, address _linkToken, bytes32 _keyHash)
