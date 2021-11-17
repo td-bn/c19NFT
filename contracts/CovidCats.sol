@@ -8,17 +8,25 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract CovidCats is ERC721, ERC721Enumerable, VRFConsumerBase, Ownable, ReentrancyGuard {
+contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using Counters for Counters.Counter;
     
+    // NFT CONSTANTS
+    Counters.Counter private _tokenSupply;
     uint256 public constant MAX_SUPPLY = 10000;
+    uint256 public constant MINT_PRICE = 0.1 ether;
+
+    bool public saleIsActive = false;
+    string private _baseTokenURI;
+    
     event Mint(address indexed _minter, uint256 indexed _tokenID, string[6] traits);
 
     // DECLARING CHAINLINK VRF FUNCTION CONSTANTS
@@ -147,25 +155,50 @@ contract CovidCats is ERC721, ERC721Enumerable, VRFConsumerBase, Ownable, Reentr
             fee = 0.1 * 10 ** 18;
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public view override(ERC721, ERC721Enumerable)
-        returns (bool) {
-            return super.supportsInterface(interfaceId);
-        }
+    /** 
+     * NFT Helper Functions
+     */
 
-    // Function to remove ERC721, ERC721Enumerable function clash error
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) 
-        internal override(ERC721, ERC721Enumerable) {
-            super._beforeTokenTransfer(from, to, tokenId);
-        }
+    // I wonder how many JPEGs are left?
+    function remainingSupply() public view returns (uint256) {
+        return MAX_SUPPLY - _tokenSupply.current();
+    }
+
+    // I wonder how many JPEGs are minted?
+    function tokenSupply() public view returns (uint256) {
+        return _tokenSupply.current();
+    }
+
+    // All the functions you don't really care about but need to be here
+    function _baseURI() internal view virtual override returns (string memory) {
+        return _baseTokenURI;
+    }
+
+    function setBaseURI(string memory baseURI) external onlyOwner {
+        _baseTokenURI = baseURI;
+    }
+
+    // Go go go!
+    function toggleSale() public onlyOwner {
+        saleIsActive = !saleIsActive;
+    }
+
+    // You had to expect this function, right?
+    function withdrawBalance() public onlyOwner {
+        payable(msg.sender).transfer(address(this).balance);
+    }
 
     /** 
      * Requests random number from Chainlink VRF function
      */
-    function claim() public returns (bytes32 requestId) {
-        require(totalSupply() <= 10000, "TOTAL SUPPLY HAS BEEN MINTED");
+    function claim() public payable returns (bytes32 requestId) {
         require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
+        require(saleIsActive, "Minting not open yet!");
+        uint256 mintIndex = _tokenSupply.current() + 1; // Start IDs at 1
+        require(mintIndex <= MAX_SUPPLY, "No more CovidCats available to mint :(");
         require(isClaiming[msg.sender] == false, "YOU CANNOT CLAIM ANOTHER NFT YET");
+        require(msg.value >= MINT_PRICE, "Not enough ETH to buy a CovidCat!");
+
         requestId = requestRandomness(keyHash, fee);
         requestToSender[requestId] = msg.sender;
         isClaiming[msg.sender] = true;
@@ -179,8 +212,9 @@ contract CovidCats is ERC721, ERC721Enumerable, VRFConsumerBase, Ownable, Reentr
      * NOTE that this function has a gas limit of 200,000 or it will as per Chainlink docs
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        
         // Get tokenId for this NFT mint
-        uint256 id = totalSupply() + 1;
+        uint256 id = _tokenSupply.current() + 1;
 
         address initiator = requestToSender[requestId];
         
