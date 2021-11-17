@@ -6,12 +6,27 @@ const abi = [
       "inputs":[],
       "name":"claim",
       "outputs":[{"internalType":"bytes32","name":"requestId","type":"bytes32"}],
-      "stateMutability":"nonpayable",
+      "stateMutability":"payable",
       "type":"function"
     },
     {
       "inputs":[],
       "name":"withdrawLink",
+      "outputs":[],
+      "stateMutability":"nonpayable",
+      "type":"function"
+    },
+    {
+      "inputs":[],
+      "name":"toggleSale",
+      "outputs":[],
+      "stateMutability":
+      "nonpayable",
+      "type":"function"
+    },
+    {
+      "inputs":[],
+      "name":"withdrawBalance",
       "outputs":[],
       "stateMutability":"nonpayable",
       "type":"function"
@@ -22,7 +37,7 @@ const abi = [
 export async function claim(_address: string) {
     const covidcats_contract = new ethers.Contract(_address, abi, provider);
     const covidcats_contract_connected = covidcats_contract.connect(wallet);
-    await covidcats_contract_connected.claim();
+    await covidcats_contract_connected.claim({value: ethers.utils.parseEther("0.1")});
     console.log("COVIDCAT CLAIMED!")
 }
 
@@ -31,6 +46,20 @@ export async function withdrawLink(_address: string) {
   const covidcats_contract_connected = covidcats_contract.connect(wallet);
   await covidcats_contract_connected.withdrawLink();
   console.log("LINK WITHDRAWN!")
+}
+
+export async function withdrawBalance(_address: string) {
+  const covidcats_contract = new ethers.Contract(_address, abi, provider);
+  const covidcats_contract_connected = covidcats_contract.connect(wallet);
+  await covidcats_contract_connected.withdrawBalance();
+  console.log("ETH WITHDRAWN!")
+}
+
+export async function toggleSale(_address: string) {
+  const covidcats_contract = new ethers.Contract(_address, abi, provider);
+  const covidcats_contract_connected = covidcats_contract.connect(wallet);
+  await covidcats_contract_connected.toggleSale();
+  console.log("MINT TURNED ON!")
 }
 
 export async function getEvent(_address: string) {
