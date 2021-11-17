@@ -31,7 +31,14 @@ const abi = [
       "stateMutability":"nonpayable",
       "type":"function"
     },
-    "event Mint(address indexed _minter, uint256 indexed _tokenID, string[6] traits)"
+    {
+      "inputs":[],
+      "name":"saleIsActive",
+      "outputs":[{"internalType":"bool","name":"","type":"bool"}],
+      "stateMutability":"view",
+      "type":"function"
+    },
+    "event Mint(address indexed _minter, uint256 indexed _tokenID, uint256[6] random_numbers)"
 ]
 
 export async function claim(_address: string) {
@@ -60,6 +67,13 @@ export async function toggleSale(_address: string) {
   const covidcats_contract_connected = covidcats_contract.connect(wallet);
   await covidcats_contract_connected.toggleSale();
   console.log("MINT TURNED ON!")
+}
+
+export async function saleIsActive(_address: string) {
+  const covidcats_contract = new ethers.Contract(_address, abi, provider);
+  // const covidcats_contract_connected = covidcats_contract.connect(wallet);
+  const saleOn = await covidcats_contract.saleIsActive();
+  return saleOn;
 }
 
 export async function getEvent(_address: string) {

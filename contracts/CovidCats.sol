@@ -25,9 +25,11 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
     uint256 public constant MINT_PRICE = 0.1 ether;
 
     bool public saleIsActive = false;
+
+    mapping (uint256 => string) private _tokenURIs;
     string private _baseTokenURI;
     
-    event Mint(address indexed _minter, uint256 indexed _tokenID, string[6] traits);
+    event Mint(address indexed _minter, uint256 indexed _tokenID, uint256[6] random_numbers);
 
     // DECLARING CHAINLINK VRF FUNCTION CONSTANTS
     bytes32 internal keyHash; //Public key against which randomness is generated
@@ -36,116 +38,6 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
     mapping(address => bool) isClaiming;
     IERC20 public LINK_token;
     
-    // TRAITS
-    string[] private face = [
-        "face1",
-        "face2",
-        "face3",
-        "face4",
-        "face5"
-    ];
-
-    uint256[] private face_weights = [
-        20,
-        20,
-        20,
-        20,
-        20
-    ];
-
-    string[] private ear = [
-        "ear1",
-        "ear2",
-        "ear3",
-        "ear4",
-        "ear5",
-        "ear6",
-        "ear7"
-    ];
-
-    uint256[] private ear_weights = [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        40
-    ];
-    string[] private mouth = [
-        "mouth1",
-        "mouth2",
-        "mouth3",
-        "mouth4",
-        "mouth5"
-    ];
-
-    uint256[] private mouth_weights = [
-        20,
-        20,
-        20,
-        20,
-        20
-    ];
-
-    string[] private eye = [
-        "eye1",
-        "eye2",
-        "eye3",
-        "eye4",
-        "eye5",
-        "eye6"
-    ];
-
-    uint256[] private eye_weights = [
-        20,
-        20,
-        20,
-        20,
-        10,
-        10
-    ];
-
-    string[] private whisker = [
-        "whisker1",
-        "whisker2",
-        "whisker3",
-        "whisker4",
-        "whisker5",
-        "whisker6",
-        "whisker7",
-        "whisker8",
-        "whisker9"
-    ];
-
-    uint256[] private whisker_weights = [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        20
-    ];
-
-    string[] private mask = [
-        "mask1",
-        "mask2",
-        "mask3",
-        "mask4",
-        "mask5"
-    ];
-
-    uint256[] private mask_weights = [
-        20,
-        20,
-        20,
-        20,
-        20
-    ];
-
     constructor( address _VRFCoordinator, address _linkToken, bytes32 _keyHash)
         VRFConsumerBase(_VRFCoordinator, _linkToken)
         ERC721("CovidCats", "CovidCat")
@@ -174,8 +66,34 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
         return _baseTokenURI;
     }
 
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        string memory _tokenURI = _tokenURIs[tokenId];
+        string memory base = _baseURI();
+        
+        // If there is no base URI, return the token URI.
+        if (bytes(base).length == 0) {
+            return _tokenURI;
+        }
+        
+        // // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
+        if (bytes(_tokenURI).length > 0) {
+            return string(abi.encodePacked(base, _tokenURI));
+        }
+        
+        // If there is a baseURI but no tokenURI, concatenate the tokenID to the baseURI.
+        // return string(abi.encodePacked(base, tokenId.toString()));
+        return _baseTokenURI;
+    }
+
     function setBaseURI(string memory baseURI) external onlyOwner {
         _baseTokenURI = baseURI;
+    }
+
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) external {
+        require(owner() == msg.sender || ownerOf(tokenId) == msg.sender, "Only the contract owner or NFT owner can set the tokenURI");
+        require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
+        _tokenURIs[tokenId] = _tokenURI;
     }
 
     // Go go go!
@@ -226,81 +144,20 @@ contract CovidCats is ERC721, VRFConsumerBase, Ownable, ReentrancyGuard {
             randomValues[i] = (randomValues[i] % 100) + 1;
         }
 
-        // Use above 6 random numbers and trait weights to randomly generate traits
-        uint256 sum;
-        
-        string memory _face;
-        string memory _ear;
-        string memory _mouth;
-        string memory _eye;
-        string memory _whisker;
-        string memory _mask;
-
-        for (uint i = 0; i < face_weights.length; i++) {
-            sum += face_weights[i];
-            if (sum >= randomValues[0]) {
-                _face = face[i];
-                sum = 0;
-                break;
-            }
-        }
-
-        for (uint i = 0; i < ear_weights.length; i++) {
-            sum += ear_weights[i];
-            if (sum >= randomValues[1]) {
-                _ear = ear[i];
-                sum = 0;
-                break;
-            }
-        }
-
-        for (uint i = 0; i < mouth_weights.length; i++) {
-            sum += mouth_weights[i];
-            if (sum >= randomValues[2]) {
-                _mouth = mouth[i];
-                sum = 0;
-                break;
-            }
-        }
-
-        for (uint i = 0; i < eye_weights.length; i++) {
-            sum += eye_weights[i];
-            if (sum >= randomValues[3]) {
-                _eye = eye[i];
-                sum = 0;
-                break;
-            }
-        }
-
-        for (uint i = 0; i < whisker_weights.length; i++) {
-            sum += whisker_weights[i];
-            if (sum >= randomValues[4]) {
-                _whisker = whisker[i];
-                sum = 0;
-                break;
-            }
-        }
-
-        for (uint i = 0; i < mask_weights.length; i++) {
-            sum += mask_weights[i];
-            if (sum >= randomValues[5]) {
-                _mask = mask[i];
-                sum = 0;
-                break;
-            }
-        }
-        
         // Mint NFT
+        _tokenSupply.increment();
         _safeMint(initiator, id);
         
         emit Mint(initiator, id, 
-            [_face,
-            _ear,
-            _mouth,
-            _eye,
-            _whisker,
-            _mask]
-            );
+            [
+                randomValues[0],
+                randomValues[1],
+                randomValues[2],
+                randomValues[3],
+                randomValues[4],
+                randomValues[5]
+            ]
+        );
 
         isClaiming[initiator] = false;
     }
